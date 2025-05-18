@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Administrar Permisos</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .form-section, .table-section, .asignacion-section {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+
+    form label {
+      display: block;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    form input, form select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    form button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #388E3C;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table thead {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    table th, table td {
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .volver {
+      position: absolute;
+      top: 20px;
+      left: 30px;
+    }
+
+    .volver a {
+      text-decoration: none;
+      font-size: 0.9em;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    .volver a:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .asignado-toggle {
+      cursor: pointer;
+      user-select: none;
+      font-size: 1.2em;
+    }
+
+    .btn-accion {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 1.2em;
+      color: var(--primary-color);
+    }
+
+    .btn-accion:hover {
+      opacity: 0.8;
+    }
+
+    /* Estilos del modal */
+    .modal-editar-permiso {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .modal-editar-permiso.active {
+      display: block;
+    }
+
+    .modal-content {
+      position: relative;
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      padding: 0;
+      color: #666;
+    }
+
+    .modal-close:hover {
+      color: #000;
+    }
+
+    .modal-footer {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-cancelar {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-guardar {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header style="position: relative;">
+      <h1>Administración de Permisos</h1>
+      <div class="volver">
+        <a href="usuarios.html">← Volver a Administración de Usuarios</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="form-section">
+        <h2>Nuevo Permiso</h2>
+        <form id="form-nuevo-permiso">
+          <label>Nombre del permiso:
+            <input type="text" id="permiso_nombre" required />
+          </label>
+
+          <label>Descripción:
+            <input type="text" id="permiso_descripcion" />
+          </label>
+
+          <button type="submit">Crear Permiso</button>
+        </form>
+      </section>
+
+      <section class="asignacion-section">
+        <h2>Asignar permisos a un rol</h2>
+        <label>Seleccionar rol:
+          <select id="rol_select">
+            <!-- Se cargan dinámicamente -->
+          </select>
+        </label>
+
+        <div style="margin-top: 20px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Permiso</th>
+                <th>Descripción</th>
+                <th>¿Asignado?</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-permisos-por-rol">
+              <!-- Se cargan dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal de edición -->
+  <div class="modal-editar-permiso" id="modal-editar-permiso">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Editar Permiso</h2>
+        <button type="button" class="modal-close" onclick="cerrarModal()">&times;</button>
+      </div>
+      
+      <form id="form-editar-permiso">
+        <input type="hidden" id="editar_id">
+        
+        <div class="form-group">
+          <label for="editar_nombre">Nombre del permiso:</label>
+          <input type="text" id="editar_nombre" required>
+        </div>
+
+        <div class="form-group">
+          <label for="editar_descripcion">Descripción:</label>
+          <input type="text" id="editar_descripcion">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-guardar">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/permisos.js"></script>
+</body>
+</html>
